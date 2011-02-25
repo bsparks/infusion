@@ -828,7 +828,7 @@ var fluid = fluid || fluid_1_3;
         var listeners = {};
         var sortedListeners = [];
         
-        function fireToListeners(listeners, args, wrapper) {
+        function fireToListeners(listeners, args, wrapper, context) {
             for (var i in listeners) {
                 var lisrec = listeners[i];
                 var listener = lisrec.listener;
@@ -836,7 +836,7 @@ var fluid = fluid || fluid_1_3;
                     continue;
                 }
                 try {
-                    var ret = (wrapper ? wrapper(listener) : listener).apply(null, args);
+                    var ret = (wrapper ? wrapper(listener) : listener).apply(context, args);
                     if (preventable && ret === false) {
                         return false;
                     }
@@ -879,10 +879,10 @@ var fluid = fluid || fluid_1_3;
             // being helpful to any other client. We need to get more experience on the kinds
             // of listeners that are useful, and ultimately factor this method away.
             fireToListeners: function (listeners, args, wrapper) {
-                return fireToListeners(listeners, args, wrapper);
+                return fireToListeners(listeners, args, wrapper, this);
             },
             fire: function () {
-                return fireToListeners(sortedListeners, arguments);
+                return fireToListeners(sortedListeners, arguments, null, this);
             }
         };
     };
