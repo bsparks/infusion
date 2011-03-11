@@ -778,6 +778,90 @@ var fluid = fluid || fluid_1_3;
         return that;
     };
 
+    // a step up to simple non DOM object WITH events
+    fluid.initEventedComponent = function(componentName, userOptions) {
+        var that = fluid.initLittleComponent(componentName, userOptions);
+
+        fluid.instantiateFirers(that, that.options);
+
+        /**
+         * addListener
+         * add a listener not configured during options
+         * an event that doesn't already exist will be created
+         * @param {String} eventName - event name
+         * @param {Object} listener - listener function
+         * @param {String} eventType - unicast or preventable
+         * @param {Function} predicate - conditional function to execute
+         * @param {Number|String} priority - order in which to execute listener
+         * @param {Number} lifespan - number of times to fire before self delete (-1 is infinite)
+         */
+        that.addListener = function(eventName, listener, eventType, predicate, priority, lifespan) {
+            // if the event doesn't exist, create it
+            if (fluid.isEmpty(that.events[eventName])) {
+
+                that.events[eventName] = fluid.event.getEventFirer(eventType === "unicast", eventType === "preventable");
+            }
+
+            // add the listener
+            that.events[eventName].addListener(listener, null, predicate, priority, lifespan);
+        };
+
+        /**
+         * manually fire off an event
+         * @param eventName - name of the event to fire
+         * @param eventArgs - array of arguments to pass
+         * @param eventType - unicast or preventable
+         */
+        that.fireEvent = function(eventName, eventArgs, eventType) {
+            eventType = eventType || "";
+
+            // if the event doesn't exist, create it
+            if (fluid.isEmpty(that.events[eventName])) {
+                that.events[eventName] = fluid.event.getEventFirer(eventType === "unicast", eventType === "preventable");
+            }
+
+            // eventArgs should be an array
+            eventArgs = $.makeArray(eventArgs);
+
+            // fire off the event in the scope of that
+            that.events[eventName].fire.apply(that, eventArgs);
+        };
+
+        that.removeListener = function(eventName, listener) {
+            if(fluid.isEmpty(that.events[eventName])) {
+                return;
+            }
+
+            // remove the listener
+            that.events[eventName].removeListener(listener);
+        };
+
+        /**
+         * adds event listeners
+         * @param {Array} actions - array of listener syntax
+         **/
+        that.addActions = function(actions) {
+            //debug.log("actions before", actions);
+            actions = $.makeArray(actions);
+            //debug.log("actions after", actions);
+            $.each(actions, function(index, a) {
+                //debug.log("a", a);
+                if(!a.eventName) {
+                    return;
+                }
+
+                that.addListener(a.eventName, a.listener, a.eventType, a.predicate, a.priority, a.lifespan);
+            });
+        };
+
+        // here we harvest the actions from the options, they are one time configs
+        if(that.options.actions) {
+            that.addActions(that.options.actions);
+            delete that.options.actions;
+        }
+
+        return that;
+    };
 
     // The Model Events system.
     
@@ -1023,11 +1107,9 @@ var fluid = fluid || fluid_1_3;
         if (!container) {
             return null;
         }
-        var that = fluid.initLittleComponent(componentName, userOptions); 
+        var that = fluid.initEventedComponent(componentName, userOptions); 
         that.container = container;
         fluid.initDomBinder(that);
-        
-        fluid.instantiateFirers(that, that.options);
 
         return that;
     };
