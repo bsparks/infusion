@@ -135,6 +135,14 @@ var fluid = fluid || fluid_1_3;
         var valueType = typeof(value);
         return !value || valueType === "string" || valueType === "boolean" || valueType === "number" || valueType === "function";
     };
+
+    fluid.isArray = function(value) {
+        return Object.prototype.toString.apply(value) === '[object Array]';
+    };
+
+    fluid.isEmpty = function(value, allowBlank) {
+        return value === null || value === undefined || ((fluid.isArray(value) && !value.length)) || (!allowBlank ? value === '' : false);
+   };
     
     /** Determines whether the supplied object can be treated as an array, by 
      * iterating an index towards its length. The test functions by detecting
